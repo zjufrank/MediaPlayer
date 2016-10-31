@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
@@ -41,7 +42,7 @@ public class MainActivity extends Activity {
 				isMusic=bMusic;
 				RefreshListView();
 			}
-		});
+		},new File("/storage/emulated/0/Music"));
 		
 		t.execute(param);
 		
@@ -111,7 +112,15 @@ public class MainActivity extends Activity {
 			@Override
 			public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 				if(isMusic){
+					Intent t=new Intent(MainActivity.this,MainActivity2.class);
+					Bundle b=new Bundle();
+					b.putString("path", listView_list[position]);
+					//   /storage/emulated/0/Music/Hello Seattle.mp3
+					t.putExtras(b);
+//					t.putExtra("path", listView_list[position]);
+					startActivity(t);
 				}else{
+					
 				}
 			}
 		});
@@ -169,19 +178,20 @@ class GetFiles extends AsyncTask<String[], Integer, String[]>{
 	private Context context;
 	ProgressDialog pd;
 	Callback callback;
+	File root;
 	int totalFils=0;
 	int curScanFils=0;
-	public GetFiles(Context context,ProgressDialog pd,Callback callback){
+	public GetFiles(Context context,ProgressDialog pd,Callback callback,File root){
 		this.all_files=new ArrayList<String>();
 		this.context=context;
 		this.pd=pd;
 		this.callback=callback;
-		
+		this.root=root;
 	}
 	@Override
 	protected String[] doInBackground(String[]... suffixs) {
 		
-		File root=new File(Environment.getExternalStorageDirectory().getPath());
+//		File root=new File(Environment.getExternalStorageDirectory().getPath());
 		all_files.clear();
 		SearchFiles(root, suffixs[0]);
 		Object[] tmp=(Object[])all_files.toArray();

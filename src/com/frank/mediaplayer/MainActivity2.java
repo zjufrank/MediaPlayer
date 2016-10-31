@@ -26,16 +26,21 @@ public class MainActivity2 extends Activity{
 	float volumn=0.5f;
 	TextView tv;
 	ListView lv;
+	String path;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.main_layout_2);
+		if(savedInstanceState!=null)
+		path=savedInstanceState.getString("path");
+		path=getIntent().getStringExtra("path");
+		path="http://win.web.ra01.sycdn.kuwo.cn/resource/n2/192/72/94/3346196416.mp3";
+		
 		findViewById(R.id.play).setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				if(isInited && mp!=null){
-					mp.start();
-					handler.postDelayed(run, 500);
+					Play();
 				}
 				Log.d("yy", "play");
 			}
@@ -68,13 +73,19 @@ public class MainActivity2 extends Activity{
 		
 		seekBar=(SeekBar)findViewById(R.id.seekBar);
 		seekBar.setOnSeekBarChangeListener(new OnSeekBarChangeListener() {
-			@Override public void onStopTrackingTouch(SeekBar seekBar) { }
-			@Override public void onStartTrackingTouch(SeekBar seekBar) { }
-			@Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-				if(isInited && mp!=null && fromUser){
+			@Override public void onStopTrackingTouch(SeekBar seekBar) {
+				int progress=seekBar.getProgress();
+				if(isInited && mp!=null){
 					mp.seekTo(progress);
 					Log.d("yy", "onProgressChanged(): progress="+progress);
 				}
+			}
+			@Override public void onStartTrackingTouch(SeekBar seekBar) { }
+			@Override public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+//				if(isInited && mp!=null && fromUser){
+//					mp.seekTo(progress);
+//					Log.d("yy", "onProgressChanged(): progress="+progress);
+//				}
 			}
 		});
 		
@@ -106,13 +117,23 @@ public class MainActivity2 extends Activity{
 		});
 		tv=(TextView)findViewById(R.id.volumn);
 		lv=(ListView)findViewById(R.id.lv);
+		Play();
 	}
-	
+	private void Play(){
+		mp.start();		
+		handler.postDelayed(run, 100);
+//		handler.postDelayed(new Runnable() {
+//			@Override
+//			public void run() {
+//			}
+//		}, 100);
+	}
 	private void InitAsset(){
 		try {
-			AssetFileDescriptor fd=getAssets().openFd("test.mp3");
+//			AssetFileDescriptor fd=getAssets().openFd("test.mp3");
 			if(mp==null)mp=new MediaPlayer();
-			mp.setDataSource(fd.getFileDescriptor());
+//			mp.setDataSource(fd.getFileDescriptor());
+			mp.setDataSource(path);
 //			AudioManager am=(AudioManager)getSystemService(AUDIO_SERVICE);
 			mp.setAudioStreamType(AudioManager.STREAM_MUSIC);
 			
@@ -124,6 +145,7 @@ public class MainActivity2 extends Activity{
 					seekBar.setMax(mp.getDuration());
 					Log.d("yy", "InitAsset() finished! duration="+mp.getDuration());
 					Log.d("yy", "isInited="+isInited);
+					Play();
 				}
 			});
 			mp.setOnCompletionListener(new OnCompletionListener() {
@@ -150,12 +172,25 @@ public class MainActivity2 extends Activity{
 	
 	Runnable run=new Runnable() {
 		@Override public void run() {
+			if(mp==null)return;
 			if(mp.isPlaying()){
 				seekBar.setProgress(mp.getCurrentPosition());
 			}
-			handler.postDelayed(run, 500);
-			Log.d("yy", "MediaPlayer.Position:"+mp.getCurrentPosition());
+			handler.postDelayed(run, 200);
+//			Log.d("yy", "MediaPlayer.Position:"+mp.getCurrentPosition());
 		}
 	};
-	
+	@Override
+	protected void onDestroy() {
+		handler.removeCallbacks(run);
+		handler=null;
+		if(mp!=null){
+			if(mp.isPlaying())
+				mp.stop();
+			mp.reset();
+			mp.release();
+			mp=null;
+		}
+		super.onDestroy();
+	};
 }
